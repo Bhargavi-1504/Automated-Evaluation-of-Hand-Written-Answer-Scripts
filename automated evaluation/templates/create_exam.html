@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Create Exam — Answer Evaluation System{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="page-header">
+        <h1><i class="fas fa-plus-circle me-2" style="color:var(--accent);"></i>Create Exam Configuration</h1>
+        <p>Enter question text, reference answers, and keywords for each question.</p>
+    </div>
+
+    <!-- Exam Name -->
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-body-pad">
+            <label class="form-label">Exam / Subject Name</label>
+            <input type="text" class="form-control" id="examName" placeholder="e.g. Machine Learning — Unit 3 Test" style="max-width:480px;">
+        </div>
+    </div>
+
+    <!-- Q1: Mandatory -->
+    <div class="q-block">
+        <div class="q-block-header">
+            <div class="q-block-label">
+                <span style="width:28px;height:28px;background:var(--accent);color:white;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;">1</span>
+                Question 1 — Mandatory
+            </div>
+            <span class="q-mark-badge"><i class="fas fa-lock me-1"></i>5 × 1 mark = 5 marks</span>
+        </div>
+        <div class="q-block-body">
+            <p class="muted" style="margin-bottom:1rem;">Q1 always has 5 sub-questions (1.a to 1.e). Each carries 1 mark.</p>
+            <div id="q1-subs">
+                {% for sub in ['a','b','c','d','e'] %}
+                <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:0.8rem;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">
+                        <span style="font-weight:700;font-size:0.9rem;">Q1.{{ sub }}</span>
+                        <span class="q-mark-badge">1 mark</span>
+                    </div>
+                    <div style="margin-bottom:0.7rem;">
+                        <label class="form-label">Question Text</label>
+                        <input type="text" class="form-control" id="q1{{ sub }}-qtext" placeholder="e.g. Define Machine Learning">
+                    </div>
+                    <div style="margin-bottom:0.7rem;">
+                        <label class="form-label">Reference Answer</label>
+                        <textarea class="form-control" id="q1{{ sub }}-ref" rows="2" placeholder="Model answer..."></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label">Keywords <span class="muted">(press Enter or comma)</span></label>
+                        <div class="tags-wrap" id="q1{{ sub }}-kw-wrap">
+                            <input type="text" class="tag-input" placeholder="Add keyword...">
+                        </div>
+                        <input type="hidden" id="q1{{ sub }}-kw">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Q2–Q5 -->
+    {% for q in ['2','3','4','5'] %}
+    <div class="q-block">
+        <div class="q-block-header">
+            <div class="q-block-label">
+                <span style="width:28px;height:28px;background:var(--ink);color:white;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;">{{ q }}</span>
+                Question {{ q }}
+                <span class="muted" style="font-weight:400;font-size:0.82rem;">(student attempts any 3 of Q2–Q5)</span>
+            </div>
+            <div class="toggle-group">
+                <span>Single</span>
+                <div class="form-check form-switch" style="margin:0;">
+                    <input class="form-check-input" type="checkbox" id="q{{ q }}-split-toggle" onchange="toggleSplit('{{ q }}')">
+                </div>
+                <span>Split (a+b)</span>
+                <span class="q-mark-badge" id="q{{ q }}-mark-badge">5 marks</span>
+            </div>
+        </div>
+        <div class="q-block-body">
+            <!-- Single format -->
+            <div id="q{{ q }}-single">
+                <div style="margin-bottom:0.7rem;">
+                    <label class="form-label">Question Text</label>
+                    <input type="text" class="form-control" id="q{{ q }}-qtext" placeholder="e.g. Explain Neural Networks in detail">
+                </div>
+                <div style="margin-bottom:0.7rem;">
+                    <label class="form-label">Reference Answer</label>
+                    <textarea class="form-control" id="q{{ q }}-ref" rows="3" placeholder="Model answer..."></textarea>
+                </div>
+                <div>
+                    <label class="form-label">Keywords</label>
+                    <div class="tags-wrap" id="q{{ q }}-kw-wrap">
+                        <input type="text" class="tag-input" placeholder="Add keyword...">
+                    </div>
+                    <input type="hidden" id="q{{ q }}-kw">
+                </div>
+            </div>
+
+            <!-- Split format -->
+            <div id="q{{ q }}-split" style="display:none;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:0.7rem;">
+                            <span style="font-weight:700;font-size:0.9rem;">Q{{ q }}.a</span>
+                            <span class="q-mark-badge">2.5 marks</span>
+                        </div>
+                        <div style="margin-bottom:0.7rem;">
+                            <label class="form-label">Question Text</label>
+                            <input type="text" class="form-control" id="q{{ q }}a-qtext" placeholder="Part A question">
+                        </div>
+                        <div style="margin-bottom:0.7rem;">
+                            <label class="form-label">Reference Answer</label>
+                            <textarea class="form-control" id="q{{ q }}a-ref" rows="2" placeholder="Model answer..."></textarea>
+                        </div>
+                        <div>
+                            <label class="form-label">Keywords</label>
+                            <div class="tags-wrap" id="q{{ q }}a-kw-wrap">
+                                <input type="text" class="tag-input" placeholder="Keyword...">
+                            </div>
+                            <input type="hidden" id="q{{ q }}a-kw">
+                        </div>
+                    </div>
+                    <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:0.7rem;">
+                            <span style="font-weight:700;font-size:0.9rem;">Q{{ q }}.b</span>
+                            <span class="q-mark-badge">2.5 marks</span>
+                        </div>
+                        <div style="margin-bottom:0.7rem;">
+                            <label class="form-label">Question Text</label>
+                            <input type="text" class="form-control" id="q{{ q }}b-qtext" placeholder="Part B question">
+                        </div>
+                        <div style="margin-bottom:0.7rem;">
+                            <label class="form-label">Reference Answer</label>
+                            <textarea class="form-control" id="q{{ q }}b-ref" rows="2" placeholder="Model answer..."></textarea>
+                        </div>
+                        <div>
+                            <label class="form-label">Keywords</label>
+                            <div class="tags-wrap" id="q{{ q }}b-kw-wrap">
+                                <input type="text" class="tag-input" placeholder="Keyword...">
+                            </div>
+                            <input type="hidden" id="q{{ q }}b-kw">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Save Button -->
+    <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem;">
+        <a href="/" class="btn btn-outline">Cancel</a>
+        <button class="btn btn-primary" onclick="saveExam()">
+            <i class="fas fa-save me-2"></i>Save Exam Configuration
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Init all tag inputs
+document.addEventListener('DOMContentLoaded', () => {
+    ['a','b','c','d','e'].forEach(s => initTagsInput(`q1${s}-kw-wrap`, `q1${s}-kw`));
+    ['2','3','4','5'].forEach(q => {
+        initTagsInput(`q${q}-kw-wrap`, `q${q}-kw`);
+        initTagsInput(`q${q}a-kw-wrap`, `q${q}a-kw`);
+        initTagsInput(`q${q}b-kw-wrap`, `q${q}b-kw`);
+    });
+});
+
+function toggleSplit(q) {
+    const isSplit = document.getElementById(`q${q}-split-toggle`).checked;
+    document.getElementById(`q${q}-single`).style.display = isSplit ? 'none' : 'block';
+    document.getElementById(`q${q}-split`).style.display = isSplit ? 'block' : 'none';
+    document.getElementById(`q${q}-mark-badge`).textContent = isSplit ? '2.5 + 2.5 marks' : '5 marks';
+}
+
+function getKeywords(id) {
+    const el = document.getElementById(id);
+    if (!el || !el.value) return [];
+    try { return JSON.parse(el.value); } catch { return []; }
+}
+
+function saveExam() {
+    const examName = document.getElementById('examName').value.trim();
+    if (!examName) { showToast('Please enter an exam name', 'danger'); return; }
+
+    // Build Q1
+    const q1 = {};
+    let q1Valid = true;
+    for (const s of ['a','b','c','d','e']) {
+        const qtext = document.getElementById(`q1${s}-qtext`).value.trim();
+        const ref = document.getElementById(`q1${s}-ref`).value.trim();
+        if (!qtext) { showToast(`Question text for Q1.${s} is required`, 'danger'); q1Valid = false; break; }
+        if (!ref) { showToast(`Reference answer for Q1.${s} is required`, 'danger'); q1Valid = false; break; }
+        q1[`1${s}`] = { 
+            question_text: qtext,
+            reference_answer: ref, 
+            keywords: getKeywords(`q1${s}-kw`) 
+        };
+    }
+    if (!q1Valid) return;
+
+    // Build Q2–Q5
+    const payload = { exam_name: examName, q1 };
+
+    for (const q of ['2','3','4','5']) {
+        const isSplit = document.getElementById(`q${q}-split-toggle`).checked;
+        if (isSplit) {
+            payload[`q${q}`] = {
+                is_split: true,
+                part_a: {
+                    question_text: document.getElementById(`q${q}a-qtext`).value.trim(),
+                    reference_answer: document.getElementById(`q${q}a-ref`).value.trim(),
+                    keywords: getKeywords(`q${q}a-kw`)
+                },
+                part_b: {
+                    question_text: document.getElementById(`q${q}b-qtext`).value.trim(),
+                    reference_answer: document.getElementById(`q${q}b-ref`).value.trim(),
+                    keywords: getKeywords(`q${q}b-kw`)
+                }
+            };
+        } else {
+            payload[`q${q}`] = {
+                is_split: false,
+                question_text: document.getElementById(`q${q}-qtext`).value.trim(),
+                reference_answer: document.getElementById(`q${q}-ref`).value.trim(),
+                keywords: getKeywords(`q${q}-kw`)
+            };
+        }
+    }
+
+    showLoading('Saving configuration...', 'Just a moment');
+
+    fetch('/api/save-exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showToast(`Exam "${data.exam_name}" saved! ID: ${data.exam_id}`, 'success');
+            setTimeout(() => window.location.href = '/evaluate', 1500);
+        } else {
+            showToast(data.error || 'Failed to save', 'danger');
+        }
+    })
+    .catch(e => { hideLoading(); showToast('Network error: ' + e.message, 'danger'); });
+}
+</script>
+{% endblock %}

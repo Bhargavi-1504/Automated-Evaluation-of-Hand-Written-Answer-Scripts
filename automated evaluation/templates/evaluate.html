@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+{% block title %}Evaluate — Answer Evaluation System{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+    <div class="page-header">
+        <h1><i class="fas fa-check-circle me-2" style="color:var(--accent);"></i>Evaluate Answer Sheet</h1>
+        <p>Upload a student's handwritten answer PDF to extract and evaluate their responses.</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+        <div class="step active" id="step-1">
+            <div class="step-num">1</div>Select Exam
+        </div>
+        <div class="step" id="step-2">
+            <div class="step-num">2</div>Upload PDF
+        </div>
+        <div class="step" id="step-3">
+            <div class="step-num">3</div>Review Extraction
+        </div>
+        <div class="step" id="step-4">
+            <div class="step-num">4</div>Results
+        </div>
+    </div>
+
+    <!-- ── STEP 1: Select Exam ── -->
+    <div id="panel-1">
+        <div class="card">
+            <div class="card-header-strip accent">
+                <i class="fas fa-list"></i> Step 1: Select Exam Configuration
+            </div>
+            <div class="card-body-pad">
+                <label class="form-label">Choose Exam</label>
+                <select class="form-select" id="examSelect" style="max-width:480px;">
+                    <option value="">— Loading exams... —</option>
+                </select>
+                <div id="examInfo" style="display:none; margin-top:1rem; padding:0.8rem 1rem; background:var(--accent-light); border-radius:var(--radius-sm); font-size:0.88rem; color:var(--accent);">
+                    <i class="fas fa-check-circle me-2"></i><span id="examInfoText"></span>
+                </div>
+                <div style="margin-top:1.5rem; display:flex; gap:1rem; align-items:center;">
+                    <button class="btn btn-primary" onclick="goToStep2()">
+                        Next <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                    <a href="/create-exam" style="font-size:0.85rem; color:var(--ink-muted);">
+                        <i class="fas fa-plus me-1"></i>Create new exam
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── STEP 2: Upload PDF ── -->
+    <div id="panel-2" style="display:none;">
+        <div class="card">
+            <div class="card-header-strip accent">
+                <i class="fas fa-upload"></i> Step 2: Upload Answer Booklet (PDF)
+            </div>
+            <div class="card-body-pad">
+                <div id="dropzone"
+                     style="border:2px dashed var(--border);border-radius:var(--radius);padding:3rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface-2);"
+                     onclick="document.getElementById('pdfFile').click()"
+                     ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div style="font-size:2.5rem;color:var(--border);margin-bottom:1rem;">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div style="font-weight:600;margin-bottom:0.3rem;">Drop PDF here or click to browse</div>
+                    <div class="muted">Only PDF files supported · Entire booklet sent as single OCR request</div>
+                    <input type="file" id="pdfFile" accept=".pdf" style="display:none;" onchange="handleFileSelect(event)">
+                </div>
+
+                <div id="fileInfo" style="display:none;margin-top:1rem;padding:0.8rem 1rem;background:var(--success-light);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px;">
+                    <i class="fas fa-file-pdf" style="color:var(--success);font-size:1.2rem;"></i>
+                    <div>
+                        <div style="font-weight:600;font-size:0.9rem;" id="fileName"></div>
+                        <div class="muted" id="fileSize"></div>
+                    </div>
+                    <button onclick="clearFile()" style="margin-left:auto;background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:1.1rem;">×</button>
+                </div>
+
+                <div style="margin-top:1.5rem;display:flex;gap:1rem;">
+                    <button class="btn btn-outline" onclick="backToStep1()"><i class="fas fa-arrow-left me-2"></i>Back</button>
+                    <button class="btn btn-primary" onclick="extractAnswers()">
+                        <i class="fas fa-magic me-2"></i>Extract Answers with OCR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── STEP 3: Review Extracted Answers ── -->
+    <div id="panel-3" style="display:none;">
+        <div class="card" style="margin-bottom:1.2rem;">
+            <div class="card-header-strip" style="background:var(--ink);justify-content:space-between;">
+                <span><i class="fas fa-eye me-2"></i>Step 3: Review Extracted Answers</span>
+                <span style="font-size:0.8rem;font-weight:400;opacity:0.7;">Edit if OCR made any mistakes</span>
+            </div>
+            <div class="card-body-pad">
+                <div id="extractionContent"></div>
+                <hr class="divider">
+                <div style="display:flex;gap:1rem;">
+                    <button class="btn btn-outline" onclick="backToStep2()"><i class="fas fa-arrow-left me-2"></i>Back</button>
+                    <button class="btn btn-primary" onclick="runEvaluation()">
+                        <i class="fas fa-rocket me-2"></i>Evaluate Answers
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── STEP 4: Results ── -->
+    <div id="panel-4" style="display:none;">
+        <div id="resultsContent"></div>
+        <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+            <button class="btn btn-outline" onclick="startOver()">
+                <i class="fas fa-redo me-2"></i>Evaluate Another
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedExamId = '';
+let selectedFile = null;
+let extractedData = {};
+
+// ── Load exams on page load ──
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/get-exams')
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('examSelect');
+            if (data.exams && data.exams.length > 0) {
+                sel.innerHTML = '<option value="">— Select an exam —</option>';
+                data.exams.forEach(e => {
+                    sel.innerHTML += `<option value="${e.exam_id}">${e.exam_name}</option>`;
+                });
+            } else {
+                sel.innerHTML = '<option value="">No exams found — create one first</option>';
+            }
+        });
+
+    document.getElementById('examSelect').addEventListener('change', function() {
+        const info = document.getElementById('examInfo');
+        if (this.value) {
+            document.getElementById('examInfoText').textContent = `Exam ID: ${this.value}`;
+            info.style.display = 'block';
+        } else {
+            info.style.display = 'none';
+        }
+    });
+});
+
+// ── Step navigation ──
+function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+        const s = document.getElementById(`step-${i}`);
+        const p = document.getElementById(`panel-${i}`);
+        s.className = 'step' + (i === n ? ' active' : i < n ? ' done' : '');
+        if (p) p.style.display = i === n ? 'block' : 'none';
+    }
+}
+
+function goToStep2() {
+    selectedExamId = document.getElementById('examSelect').value;
+    if (!selectedExamId) { showToast('Please select an exam first', 'danger'); return; }
+    setStep(2);
+}
+function backToStep1() { setStep(1); }
+function backToStep2() { setStep(2); }
+
+// ── File handling ──
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').style.borderColor = 'var(--border)';
+    const file = e.dataTransfer.files[0];
+    if (file) setFile(file);
+}
+function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').style.borderColor = 'var(--accent)';
+}
+function handleDragLeave(e) {
+    document.getElementById('dropzone').style.borderColor = 'var(--border)';
+}
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) setFile(file);
+}
+function setFile(file) {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showToast('Only PDF files are supported', 'danger'); return;
+    }
+    selectedFile = file;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    const fi = document.getElementById('fileInfo');
+    fi.style.display = 'flex';
+}
+function clearFile() {
+    selectedFile = null;
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('pdfFile').value = '';
+}
+
+// ── Extract answers ──
+function extractAnswers() {
+    if (!selectedFile) { showToast('Please upload a PDF file', 'danger'); return; }
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('exam_id', selectedExamId);
+
+    showLoading('Reading Answer Booklet...', 'Sending PDF to OCR — this may take 15–30 seconds');
+
+    fetch('/api/extract', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                extractedData = data.extracted;
+                renderExtractionReview(data.extracted);
+                setStep(3);
+                showToast('Text extracted successfully!', 'success');
+            } else {
+                showToast(data.error || 'Extraction failed', 'danger');
+            }
+        })
+        .catch(e => { hideLoading(); showToast('Network error: ' + e.message, 'danger'); });
+}
+
+// ── Render extraction review ──
+function renderExtractionReview(data) {
+    const subs = ['1a','1b','1c','1d','1e'];
+    const subLabels = ['1.a','1.b','1.c','1.d','1.e'];
+    let html = '';
+
+    // Q1
+    html += `<div class="q-block" style="margin-bottom:1.2rem;">
+        <div class="q-block-header">
+            <div class="q-block-label">
+                <span style="width:24px;height:24px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;">1</span>
+                Question 1 — Mandatory
+            </div>
+            <span class="q-mark-badge">5 marks</span>
+        </div>
+        <div class="q-block-body">`;
+
+    subs.forEach((sub, i) => {
+        const val = (data.q1 || {})[sub] || '';
+        html += `<div style="margin-bottom:0.8rem;">
+            <label class="form-label">Q${subLabels[i]}</label>
+            <textarea class="form-control" id="edit-q1-${sub}" rows="2">${escHtml(val)}</textarea>
+        </div>`;
+    });
+    html += `</div></div>`;
+
+    // Q2–Q5
+    const attempted = data.attempted_questions || [];
+    ['2','3','4','5'].forEach(q => {
+        const isAttempted = attempted.includes(q);
+        const badge = isAttempted
+            ? `<span class="badge-attempted"><i class="fas fa-check me-1"></i>Attempted</span>`
+            : `<span class="badge-skipped"><i class="fas fa-minus me-1"></i>Not Attempted</span>`;
+
+        html += `<div class="q-block" style="margin-bottom:1rem;${!isAttempted ? 'opacity:0.6;' : ''}">
+            <div class="q-block-header">
+                <div class="q-block-label">
+                    <span style="width:24px;height:24px;background:var(--ink);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;">${q}</span>
+                    Question ${q}
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    ${badge}
+                    <input type="checkbox" id="attempted-${q}" ${isAttempted ? 'checked' : ''} onchange="toggleAttempted('${q}', this.checked)" style="cursor:pointer;">
+                    <label for="attempted-${q}" class="muted" style="cursor:pointer;margin:0;">Mark as attempted</label>
+                </div>
+            </div>`;
+
+        if (isAttempted) {
+            const hasSplitA = (data[`q${q}a`] || '').trim() !== '';
+            const hasSplitB = (data[`q${q}b`] || '').trim() !== '';
+            const isSplit = hasSplitA || hasSplitB;
+
+            html += `<div class="q-block-body" id="q${q}-body">`;
+            if (isSplit) {
+                html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div>
+                        <label class="form-label">Q${q}.a <span class="q-mark-badge">2.5 marks</span></label>
+                        <textarea class="form-control" id="edit-q${q}a" rows="3">${escHtml(data[`q${q}a`] || '')}</textarea>
+                    </div>
+                    <div>
+                        <label class="form-label">Q${q}.b <span class="q-mark-badge">2.5 marks</span></label>
+                        <textarea class="form-control" id="edit-q${q}b" rows="3">${escHtml(data[`q${q}b`] || '')}</textarea>
+                    </div>
+                </div>`;
+            } else {
+                html += `<div>
+                    <label class="form-label">Answer <span class="q-mark-badge">5 marks</span></label>
+                    <textarea class="form-control" id="edit-q${q}" rows="4">${escHtml(data[`q${q}`] || '')}</textarea>
+                </div>`;
+            }
+            html += `</div>`;
+        } else {
+            html += `<div class="q-block-body" id="q${q}-body" style="display:none;"></div>`;
+        }
+
+        html += `</div>`;
+    });
+
+    document.getElementById('extractionContent').innerHTML = html;
+}
+
+function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleAttempted(q, checked) {
+    const body = document.getElementById(`q${q}-body`);
+    const block = body.closest('.q-block');
+    block.style.opacity = checked ? '1' : '0.6';
+    body.style.display = checked ? 'block' : 'none';
+
+    // Update attempted_questions in extractedData
+    let attempted = extractedData.attempted_questions || [];
+    if (checked && !attempted.includes(q)) attempted.push(q);
+    if (!checked) attempted = attempted.filter(x => x !== q);
+    extractedData.attempted_questions = attempted;
+}
+
+// ── Collect edited answers ──
+function collectEditedAnswers() {
+    const result = { q1: {}, attempted_questions: extractedData.attempted_questions || [] };
+
+    ['1a','1b','1c','1d','1e'].forEach(sub => {
+        const el = document.getElementById(`edit-q1-${sub}`);
+        result.q1[sub] = el ? el.value : '';
+    });
+
+    ['2','3','4','5'].forEach(q => {
+        const aEl = document.getElementById(`edit-q${q}a`);
+        const bEl = document.getElementById(`edit-q${q}b`);
+        const sEl = document.getElementById(`edit-q${q}`);
+
+        if (aEl) result[`q${q}a`] = aEl.value;
+        if (bEl) result[`q${q}b`] = bEl.value;
+        if (sEl) result[`q${q}`] = sEl.value;
+
+        result[`q${q}a`] = result[`q${q}a`] || '';
+        result[`q${q}b`] = result[`q${q}b`] || '';
+        result[`q${q}`] = result[`q${q}`] || '';
+    });
+
+    return result;
+}
+
+// ── Run evaluation ──
+function runEvaluation() {
+    const finalAnswers = collectEditedAnswers();
+
+    // Validate at least 3 questions attempted from Q2–Q5
+    const attempted = finalAnswers.attempted_questions || [];
+    if (attempted.length < 3) {
+        showToast(`Only ${attempted.length} of Q2–Q5 attempted. Student must attempt 3.`, 'danger');
+        return;
+    }
+    if (attempted.length > 3) {
+        showToast(`${attempted.length} questions attempted. Only 3 will be counted. Please deselect one.`, 'danger');
+        return;
+    }
+
+    showLoading('Evaluating Answers...', 'Scoring with LLM + Similarity + Keywords');
+
+    fetch('/api/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ exam_id: selectedExamId, extracted_answers: finalAnswers })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            renderResults(data.results);
+            setStep(4);
+            showToast('Evaluation complete!', 'success');
+        } else {
+            showToast(data.error || 'Evaluation failed', 'danger');
+        }
+    })
+    .catch(e => { hideLoading(); showToast('Network error: ' + e.message, 'danger'); });
+}
+
+// ── Render results ──
+function renderResults(results) {
+    const summary = results.summary || {};
+    const pct = summary.percentage || 0;
+    const barClass = pct >= 70 ? 'good' : pct >= 40 ? 'mid' : 'low';
+
+    let html = '';
+
+    // Summary card
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;">
+        <div class="score-card">
+            <div class="score-big">${summary.grand_total || 0}</div>
+            <div class="score-label">Total Marks</div>
+            <div class="muted" style="margin-top:0.3rem;">out of 20</div>
+        </div>
+        <div class="score-card">
+            <div class="score-big">${pct}%</div>
+            <div class="score-label">Percentage</div>
+            <div class="score-bar-wrap" style="margin:0.5rem 0 0;">
+                <div class="score-bar ${barClass}" style="width:${pct}%"></div>
+            </div>
+        </div>
+        <div class="score-card">
+            <div class="score-big" style="font-size:2rem;">${getGrade(pct)}</div>
+            <div class="score-label">Grade</div>
+            <div class="muted" style="margin-top:0.3rem;">Based on percentage</div>
+        </div>
+    </div>`;
+
+    // Q1 Results
+    html += `<div class="card" style="margin-bottom:1.2rem;">
+        <div class="card-header-strip accent">
+            <i class="fas fa-list-ol me-2"></i>Question 1 — Mandatory
+            <span style="margin-left:auto;font-size:0.85rem;">${summary.q1_total || 0} / 5 marks</span>
+        </div>
+        <div>`;
+
+    const subLabels = { '1a':'1.a', '1b':'1.b', '1c':'1.c', '1d':'1.d', '1e':'1.e' };
+    Object.entries(results.q1 || {}).forEach(([sub, res]) => {
+        html += `<div class="result-row">
+            <div>
+                <div style="font-weight:600;">Q${subLabels[sub] || sub}</div>
+                ${res.feedback ? `<div class="muted" style="margin-top:2px;">${res.feedback}</div>` : ''}
+            </div>
+            <div style="text-align:right;min-width:80px;">
+                <div class="result-mark">${res.final_marks} / 1</div>
+                <div class="muted" style="font-size:0.75rem;">LLM: ${res.llm_score} | Sim: ${res.similarity_score}</div>
+            </div>
+        </div>`;
+    });
+    html += `</div></div>`;
+
+    // Q2–Q5 Results
+    html += `<div class="card">
+        <div class="card-header-strip" style="background:var(--ink);justify-content:space-between;">
+            <span><i class="fas fa-tasks me-2"></i>Questions 2–5 (Any 3 attempted)</span>
+            <span style="font-size:0.85rem;">${summary.q2_to_q5_total || 0} / 15 marks</span>
+        </div>
+        <div>`;
+
+    ['2','3','4','5'].forEach(q => {
+        const qRes = (results.q2_to_q5 || {})[q] || {};
+        if (!qRes.attempted) {
+            html += `<div class="result-row">
+                <div style="font-weight:600;">Question ${q}</div>
+                <span class="badge-skipped">Not Attempted</span>
+            </div>`;
+        } else if (qRes.is_split) {
+            html += `<div style="border-bottom:1px solid var(--border);padding:0.75rem 1rem;">
+                <div style="font-weight:700;margin-bottom:0.5rem;display:flex;justify-content:space-between;">
+                    <span>Question ${q} (Split)</span>
+                    <span class="result-mark">${qRes.total} / 5</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.88rem;">
+                    <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:0.7rem;">
+                        <div style="font-weight:600;margin-bottom:0.3rem;">Q${q}.a — ${qRes.part_a.final_marks} / 2.5</div>
+                        <div class="muted">${qRes.part_a.feedback || ''}</div>
+                    </div>
+                    <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:0.7rem;">
+                        <div style="font-weight:600;margin-bottom:0.3rem;">Q${q}.b — ${qRes.part_b.final_marks} / 2.5</div>
+                        <div class="muted">${qRes.part_b.feedback || ''}</div>
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            const res = qRes.result || {};
+            html += `<div class="result-row">
+                <div>
+                    <div style="font-weight:600;">Question ${q}</div>
+                    ${res.feedback ? `<div class="muted" style="margin-top:2px;">${res.feedback}</div>` : ''}
+                </div>
+                <div style="text-align:right;min-width:80px;">
+                    <div class="result-mark">${res.final_marks} / 5</div>
+                    <div class="muted" style="font-size:0.75rem;">LLM: ${res.llm_score} | Sim: ${res.similarity_score}</div>
+                </div>
+            </div>`;
+        }
+    });
+
+    html += `</div></div>`;
+    document.getElementById('resultsContent').innerHTML = html;
+}
+
+function getGrade(pct) {
+    if (pct >= 90) return 'O';
+    if (pct >= 80) return 'A+';
+    if (pct >= 70) return 'A';
+    if (pct >= 60) return 'B+';
+    if (pct >= 50) return 'B';
+    if (pct >= 40) return 'C';
+    return 'F';
+}
+
+function startOver() {
+    selectedFile = null;
+    extractedData = {};
+    document.getElementById('pdfFile').value = '';
+    document.getElementById('fileInfo').style.display = 'none';
+    setStep(1);
+}
+</script>
+{% endblock %}
