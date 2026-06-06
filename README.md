@@ -75,12 +75,8 @@ SECRET_KEY=any_random_string
 ### 3. Run the Project
 Execute the appropriate startup script for your operating system:
 
-* **Windows:** ```bash
-  start.bat
- 
-Mac / Linux:
-Bash
-./start.sh
+* **Windows:** start.bat
+* **Mac / Linux:** ./start.sh
 
 ### 4. Open in Browser
 
