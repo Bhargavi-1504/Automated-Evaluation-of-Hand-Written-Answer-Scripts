@@ -1,65 +1,92 @@
-**🧠 Automated Evaluation of Handwritten Answer Scripts
-Using Hybrid Model**
+# 🧠 Automated Evaluation of Handwritten Answer Scripts  
+## Using Hybrid Model
 
-🏫 **Project Overview**
+---
 
-This project automates the evaluation of handwritten answer scripts using OCR + LLM-based semantic understanding.
+# 🏫 Project Overview
 
-Unlike traditional systems that rely only on keyword matching, this system evaluates answers based on meaning, context, and similarity, making grading more accurate, fair, and scalable.
+This project automates the evaluation of handwritten answer scripts using **OCR + LLM-based semantic understanding**.
 
-🚨 **Problem Statement**
+Unlike traditional systems that rely only on keyword matching, this system evaluates answers based on **meaning, context, and similarity**, making grading more accurate, fair, and scalable.
+
+---
+
+# 🚨 Problem Statement
 
 Manual evaluation faces major challenges:
 
-⏱ Time-consuming grading process
-❌ Inconsistent marks between evaluators
-🔑 Keyword-based systems fail for descriptive answers
-🧠 Cannot understand subjective answers
-📦 Difficult storage and re-evaluation of scripts
+- ⏱ Time-consuming grading process  
+- ❌ Inconsistent marks between evaluators  
+- 🔑 Keyword-based systems fail for descriptive answers  
+- 🧠 Cannot understand subjective answers  
+- 📦 Difficult storage and re-evaluation of scripts  
 
-👉 **Need:**
+👉 **Need:**  
 An intelligent system that evaluates based on meaning, not just keywords
 
-🎯 **Project Objectives**
+---
 
-🧠 Semantic evaluation using LLMs
-⚖ Hybrid multi-method scoring system
-⏱ Reduce evaluation time by up to 95%
-📄 Process full answer sheet using single OCR request
-🎯 Achieve 85%+ correlation with human grading
+# 🎯 Project Objectives
 
-⚙️ **System Architecture**
+- 🧠 Semantic evaluation using LLMs  
+- ⚖ Hybrid multi-method scoring system  
+- ⏱ Reduce evaluation time by up to 95%  
+- 📄 Process full answer sheet using single OCR request  
+- 🎯 Achieve 85%+ correlation with human grading  
 
-🧰 **Tech Stack**
+---
 
-**Frontend:** Flask + Bootstrap 5
-**OCR Engine**: Gemini-3-flash-preview API
-**NLP:** Sentence Transformers
-**Evaluation Engine:** Hybrid scoring pipeline
+# ⚙️ System Architecture
 
-🔄 **Key Features**
+---
 
-📄 Full PDF processed in single API call (base64 input)
-⚡ Rate-limited API usage (5 requests/min)
-🔄 Smart extraction of Q1–Q5 structure
-📑 Automatic reordering of answers
-✏ Teacher review before evaluation
+## 🧰 Tech Stack
 
-📥 **Setup Instructions**
+- **Frontend:** Flask + Bootstrap 5  
+- **OCR Engine:** Gemini-3-flash-preview API  
+- **NLP:** Sentence Transformers  
+- **Evaluation Engine:** Hybrid scoring pipeline  
 
-1. Install dependencies
+---
+
+## 🔄 Key Features
+
+- 📄 Full PDF processed in single API call (base64 input)  
+- ⚡ Rate-limited API usage (5 requests/min)  
+- 🔄 Smart extraction of Q1–Q5 structure  
+- 📑 Automatic reordering of answers  
+- ✏ Teacher review before evaluation  
+
+---
+
+# 📥 Setup Instructions
+
+### 1. Install dependencies  
+```bash
 pip install -r requirements.txt
+```
 
-2. Create .env file
+### 2. Create `.env` file
+```env
 GEMINI_API_KEY=your_actual_api_key_here
 SECRET_KEY=any_random_string
+```
 
-3. Run the project
-Windows: start.bat
-Mac / Linux: ./start.sh
+### 3. Run the Project
+Execute the appropriate startup script for your operating system:
 
-4. Open in browser
-http://localhost:5000
+* **Windows:** ```bash
+  start.bat
+  ```
+* **Mac / Linux:** ```bash
+./start.sh
+```
+
+### 4. Open in Browser
+
+Once the application is running, open your preferred web browser and navigate to the following local address:
+
+**[http://localhost:5000](http://localhost:5000)**
 
 📥 **OCR Module (How It Works)**
 
