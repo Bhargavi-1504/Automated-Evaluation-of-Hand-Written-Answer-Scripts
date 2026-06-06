@@ -39,9 +39,8 @@ An intelligent system that evaluates based on meaning, not just keywords
 # ⚙️ System Architecture
 
 ---
-## ⚙️ System Architecture & Tech Stack
 
-### 🗺️ System Workflow Diagram
+## 🗺️ System Workflow Diagram
 
 <img width="1450" height="1719" alt="image" src="https://github.com/user-attachments/assets/bc0ca553-ff16-4d1b-acac-efa555d126ae" />
 
