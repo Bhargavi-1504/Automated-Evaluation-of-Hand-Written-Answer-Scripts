@@ -77,10 +77,10 @@ Execute the appropriate startup script for your operating system:
 
 * **Windows:** ```bash
   start.bat
-  ```
-* **Mac / Linux:** ```bash
+ 
+Mac / Linux:
+Bash
 ./start.sh
-```
 
 ### 4. Open in Browser
 
@@ -88,61 +88,66 @@ Once the application is running, open your preferred web browser and navigate to
 
 **[http://localhost:5000](http://localhost:5000)**
 
-📥 **OCR Module (How It Works)**
+## 📥 OCR Module (How It Works)
 
 1. Teacher uploads student PDF (10–15 pages)
 2. Entire PDF sent to Gemini API (base64 encoded)
 3. AI extracts:
-   Q1.a – Q1.e
-   Q2–Q5 answers
+   * Q1.a – Q1.e
+   * Q2 – Q5 answers
 4. Handles split answers across pages
 5. Reorders answers by question number
 6. Teacher reviews extracted content
-   
-🧪 **Evaluation Strategy (Core System)**
 
-Final score is calculated using a 3-method hybrid model:
+---
 
-🤖 **1. LLM Semantic Evaluation (50%)**
-Evaluates conceptual correctness
-Focuses on meaning rather than wording
+## 🧪 Evaluation Strategy (Core System)
 
-📊 **2. Embedding Similarity (30%)**
-Converts answers into vectors
-Uses cosine similarity
-Measures conceptual closeness
+The final score is calculated using a 3-method hybrid model:
 
-🔑 **3. Keyword Matching (20%**)
-Ensures important terms are present
-Prevents irrelevant answers from scoring high
+| Evaluation Module | Weight | Core Focus |
+| :--- | :---: | :--- |
+| **🤖 1. LLM Semantic Evaluation** | **50%** | Evaluates conceptual correctness; focuses on overall meaning rather than rigid wording. |
+| **📊 2. Embedding Similarity** | **30%** | Converts answers into dense vectors to measure conceptual closeness via cosine similarity. |
+| **🔑 3. Keyword Matching** | **20%** | Ensures vital technical terms are present; prevents irrelevant answers from scoring high. |
 
-📌 **Final Score Formula**
-Final Score = (LLM × 0.5) + (Embedding × 0.3) + (Keyword × 0.2)
+### 📌 Final Score Formula
 
-📊 **Results & Impact**
+The grading framework uses a weighted linear combination of all three modules:
 
-⚡ Faster evaluation process
-🎯 Consistent scoring across students
-📉 Huge reduction in manual workload
-🧠 Effective for subjective answers
-📦 Scalable for large institutions
+$$Final\ Score = (LLM \times 0.5) + (Embedding \times 0.3) + (Keyword \times 0.2)$$
 
-🚀 **Future Enhancements**
+---
 
-📱 Mobile scanning app for answer sheets
-🧾 LMS integration
-📊 Large-scale deployment testing
-🧠 Explainable AI scoring system
-🌐 Multimodal evaluation (text + handwriting + diagrams)
+## 📊 Results & Impact
 
-🏁 **Conclusion**
+* ⚡ **Faster Evaluation:** Accelerates the traditional time-consuming grading cycle.
+* 🎯 **Consistent Scoring:** Eliminates evaluator bias and ensures standardized marking across all students.
+* 📉 **Reduced Workload:** Drives a massive reduction in manual institutional workloads.
+* 🧠 **Subjective Understanding:** Highly effective at accurately parsing descriptive and subjective answers.
+* 📦 **Scalability:** Built to scale seamlessly for large academic institutions.
 
-This system transforms traditional manual grading into an AI-powered intelligent evaluation system.
+---
+
+## 🚀 Future Enhancements
+
+* 📱 **Mobile Scanning App:** Native mobile scanning integration for capturing physical answer sheets.
+* 🧾 **LMS Integration:** Seamless connection with popular Learning Management Systems (Moodle, Canvas, Blackboard).
+* 📊 **Large-Scale Testing:** Deployment testing to mimic high-volume, university-wide examination loads.
+* 🧠 **Explainable AI Scoring:** A transparent feedback generation system that explains point allocations to students.
+* 🌐 **Multimodal Evaluation:** Expanding the engine to simultaneously evaluate text, handwriting, and technical diagrams.
+
+---
+
+## 🏁 Conclusion
+
+This system transforms traditional manual grading into an AI-powered intelligent evaluation pipeline. By dynamically combining **OCR extraction, LLM reasoning, semantic similarity, and keyword validation**, it delivers a faster, fairer, and highly transparent academic assessment tool.
 
 It combines:
-1. OCR extraction
-2. LLM reasoning
-3. Semantic similarity
-4. Keyword validation
 
-for faster, fair, and transparent assessment.
+1. **OCR extraction**
+2. **LLM reasoning**
+3. **Semantic similarity**
+4. **Keyword validation**
+
+for a **faster, fair, and transparent** assessment.
